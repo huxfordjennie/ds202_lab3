@@ -8,46 +8,220 @@ output: html_document
 ---
 
 
+
+## Outline
+
+
+
+- Work in pairs, as in Lab 2
+
+- Create a repository (one per team) & give access to your teammate
+
+- Do a data exploration (on happiness)
+
+- Create an R markdown file that contains all code to read the data and create the plots
+
+- Submit!
+
+
+
+
+
+## Github repository
+
+
+
+- Decide on who is the owner and who is the partner. 
+
+- The owner should create a GitHub repository called `ds202_lab3`, and give access to the partner.
+
+- For a refreshment, review the procedures for collaboration for Lab 2. 
+
+- Collaborate on `team.Rmd` to finish all the questions. 
+
+
+
+## Format for submission
+
+
+
+- We will check whether or not your lab results are reproducible - i.e. we will knit your `team.Rmd` file. 
+
+- At this point, you should be pretty familar with using Rmarkdown and explored its various features. Starting from this assignment, you will also be graded on **style**. Style means is your report *clear, easy to read, and flows logically*? Is it obvious that you and your partner have spent time organizing the material in a compelling way that makes it easy (and even enjoyable) for others to read? This `team.Rmd` should be something that you would feel confident turning into a manager/supervisor as proof of your progress. 
+
+-  <span style="color:red">Each plot at **minimum** must have labels for both axes and a title. If you don't have these components, you will not get full credit for your answers. Each plot ideally should also come with a description. </span> 
+
+
+
 ## Background
 
-The General Social Survey (GSS) has been run by NORC every other year since 1972 to keep track of current opinions across the United States. We are working with an excerpt of the dataset that covers years 1972 to 2016. The variable names along with a brief description are as follows: 
 
-| Variable      | Description   |    
-| ------------- |:-------------:| 
-| Year          | Year for this respondent | 
-| Age           | Age of respondent | 
-| Sex           | Sex of respondent     | 
-|....           | .....      | 
+
+The General Social Survey (GSS) has been run by NORC every other year since 1972 to keep track of current opinions across the United States. 
+
+
+
+An excerpt of the GSS data is available from my github website. 
+
+When you `git pull` from my github folder, the file [HAPPY.rds](HAPPY.rds) should have also downloaded. Put the file in the same folder as your working directory. You can check your working directory by typing `getwd()` in your R session. The following command is going to load the data into your R session:
+
+
+
+```{r,eval=FALSE}
+
+happy <- readRDS("HAPPY.rds")
+head(happy)
+```
+
+
+
+Let's convert all the names to lowercase - it is easier to work with. Type in: 
+
+
+
+```{r,eval=FALSE}
+
+names(happy) = tolower(names(happy))
+names(happy)
+```
+
+
 
 Now it's important to understand what each column stands for. You can find a codebook with explanations for each of the variables at https://gssdataexplorer.norc.org/
 
-## Data Cleaning 
 
-Initial exploration revealed that some data processing was needed before we could proceed with further visualization. All missing values were encoded with 'NA' as follows:
+
+## Part one (cleaning)
+
+
+
+Answer each of the following questions using R code to get an answer. 
+
+Write a separate code chunk to manipulate each variable. Once all the data manipulation is done, show the values in a barchart or histogram and comment on the plot. Use `ggplot2` to create the plots.
+
+
+
+1. Data cleaning: the values "IAP", "DK" and "NA" all encode missing values. Replace all of these instances by the value `NA`. 
 ```{r}
-#insert relevant R code for Q1 here
+
+
+
+
+happy[happy=="IAP"]=NA
+happy[happy=="NA"]=NA
+happy[happy=="DK"]=NA
+
+
+
+
+
+head(happy)
+
 ```
 
-In total there were `....` number of missing values for the following `....` variables. 
 
-Variables were also cast into the correct type in order to ease data visualization. This was done by:
+2. Check the type of the variable and cast into the right type (factor variable for categorical variables). For age, change "89 OR OLDER" to 89 and assume the variable should be numeric. (Hint: see `?as.character` and `?as.numeric`)
+
 ```{r}
-#insert relevant R code for Q2 here
+which(happy$age >= 90)
+
+happy$age [ happy$age >= 89] = 89
+
+as.numeric(happy$age)
+
+
+
+````
+
+
+3. Bring all levels of factors into a sensible order. For marital you could e.g. order the levels according to average age. 
+
+```{r}
+
+happy %>% arrange(age, happy, sex)
+
+#I arranged the data with age, happy, and sex in order for us to see how age happiness may correspond.  Sex was also catagorized to see #if there is a difference between male and female
+
+
+
+table(happy$marital)
+
 ```
 
-Factors were also organized into meaningful order as follows: 
+
+
+## Part two (exploration)
+
+
+
+*Happiness!*
+
+Use `ggplot2` to create the plots. Your exploration should make use all elements of the grammar of graphics: mappings (`color`, `fill`, and `size` at least), different `geom`s (4 at least), scales, coordinates (eg `coord_flip`), facet, and theme (eg setting axis labels and title). **The final plot doesn't need to include all these elements, but they should be part of your exploration**. For each investigation, create an appropriate visualization and write a paragraph to describe it.
+
+
+
+1. Investigate the distributions of 2 different variables. 
 ```{r}
-#insert relevant R code for Q3 here
+library(tidyverse)
+library(ggplot2)
+new_plot = filter(happy,marital!="NA")
+new_plot2 = filter(new_plot, degree != "NA")
+new_plot3 = filter(new_plot2, happy != "NA")
+ggplot(data = new_plot, aes(x = marital, y = age, color = marital)) + geom_boxplot( size = 1,fill = "black")+ggtitle("Marital vs Age")
+
+ggplot(data = new_plot, aes(x = marital, color = marital)) + geom_bar( size = 1,fill = "black")+ggtitle("Marital")
+
+ggplot(data = new_plot, aes(x = age, color = marital)) + geom_bar( size = 1,fill = "black")+ggtitle("Age")
+
+```
+
+2. Investigate the relationship between happiness and three other variables in the data.
+```{r}
+
+table(happy$happy)
+ggplot(data = new_plot3, aes(x = happy,fill= marital)) + geom_bar()+facet_wrap("degree")
+
+ggplot(data = new_plot3, aes(x = happy,fill= marital)) + geom_bar()+facet_wrap("sex")
+
+ggplot(data = new_plot3, aes(x = happy,fill= marital)) + geom_bar()
+
+ggplot(data = new_plot3, aes(x = sex))+geom_bar()
+
+
+
+
 ```
 
 
-## Data Exploration 
+3. What do you learn from the data set? Write one or two paragraphs to describe.
 
-Two variables of interest are `...` and `...`. Their distributions are as follow: 
-```{r}
-#insert relevant R code here
-#include graphics. DESCRIBE your plot in context. Make sure it includes axis labels and appropriate title. 
-```
+  With the data it shows that most of the people are in Highschool.  The smallest amount of people are graduates.  The data also shows that most of the people are married and are usually pretty happy.  Overall the data shows that most people are pretty happy and very few are not too happy or very happy.  There is slightly more females than males, but there are less widowed men.
 
-The distribution for `...` is `....`, suggesting that `....` 
+Explore the dataset yourself, and then discuss and refine answers as a team.
+
+
+
+## Create a report
+
+
+
+Put together everything you've done in Part 1 and 2 into a report (`team.Rmd`). This report should **all** of the questions from Part 1 and 2 and be written in a clear and concise manner. It should **not** be in question and answer format. However you need to address **every** question in order to get full points. **Include R code and graphics when appropriate.** See `Lab3_template.Rmd` for a minimal working example.   
+
+
+
+## Submission
+
+
+
+1. Push `team.Rmd` and `team.html` to the owner's git repo.
+
+
+
+2. **Submit both `team.Rmd` and `team.html` to Canvas as well**. In your submission, include: 
+
+    - The owner's GitHub username 
+
+    - The partner's GitHub username 
+
+    - Repo name (should be `ds202_lab3`)
 
