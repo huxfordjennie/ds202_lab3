@@ -7,47 +7,299 @@ date: "09/26/2019"
 output: html_document
 ---
 
+```{r}
+Happy <- readRDS("HAPPY.rds")
+head(Happy)
+```
+ 
+```{r}
+names(Happy) = tolower(names(Happy))
+names(Happy)
+```
+#Report
+
+Data cleaning: the values "IAP", "DK" and "NA" all encode missing values. We have replaced all of these instances by the value `NA`. 
+```{r}
+Happy[Happy=="IAP"]=NA
+Happy[Happy=="NA"]=NA
+Happy[Happy=="DK"]=NA
+head(Happy)
+```
+We have changed the age of "89 OR OLDER" to 89 and changed the variable to numeric. Cast categorical variables to factor. 
+```{r}
+unique(Happy$age)
+```
+
+```{r}
+Happy$age[Happy$age=="89 OR OLDER"] <- '89'
+unique(Happy$age)
+Happy$age <- as.numeric(Happy$age)
+typeof(Happy$age)
+```
+
+```{r}
+Happy$degree <- as.factor(Happy$degree)
+Happy$happy <- as.factor(Happy$happy)
+Happy$sex <- as.factor(Happy$sex)
+Happy$finrela <- as.factor(Happy$finrela)
+Happy$health <- as.factor(Happy$health)
+head(Happy)
+```
+
+We have reordered marital by age. 
+```{r}
+Happy$marital <- factor(Happy$marital, levels = c("NEVER MARRIED", "MARRIED", "SEPARATED", "DIVORCED", "WIDOWED"))
+Happy$marital <- order(Happy$marital, Happy$age)
+```
+
+We also reordered degree by the order of which you would go about obtaining each degree.
+
+```{r}
+Happy$degree <- factor(Happy$degree, levels = c("LT HIGH SCHOOL", "HIGH SCHOOL", "JUNIOR COLLEGE", "BACHELOR", "GRADUATE"))
+table(Happy$degree)
+```
+
+Then we reordered health from the worst health, poor, to the best health, excellent.
+
+```{r}
+Happy$health <- factor(Happy$health, levels = c("POOR", "FAIR", "GOOD", "EXCELLENT"))
+table(Happy$health)
+```
+
+We decided to look at the overall distributions of the variables degree and happy.
+
+###Distribution of degree:
+```{r}
+library(ggplot2)
+ggplot(data = Happy, aes(x=degree)) +
+  geom_bar() +
+  ggtitle("Distribution of Education Level") +
+  xlab("Education Level") +
+  ylab("Count")
+```
+
+```{r}
+prop.table(table(Happy$degree))
+```
+
+When focussing on degree the data shows us that people with a high school degree as their highest level of education is greater than any other level of degree while, people with a junior collegiate degree as their highest level of education is lower than any other degree level.
+
+###Distribution of Happy
+```{r}
+ggplot(data = Happy, aes(x = happy, color = marital)) + 
+  geom_bar(fill = "sky blue")+
+  ggtitle("Distribution of Happiness") +
+  xlab("Happiness") +
+  ylab("Count")
+```
+```{r}
+prop.table(table(Happy$happy))
+```
+
+Looking at happiness overall we see that about 55% of people are "Pretty Happy", only about 12% of people are "Not Too Happy", and the remaining 31% are "Very Happy."
+
+
+##We then investigated if happiness had a relationship with degree, health and/or sex. 
+###Relationship between Happiness and degree
+```{r}
+ggplot(data = Happy, aes(x = degree, fill= happy)) +
+  geom_bar(position = "fill") +
+  ggtitle("Education by Happiness") +
+  xlab("Level of Education") +
+  ylab("Proportion")
+```
+
+###Relationship between Happiness and Sex
+```{r}
+ggplot(data = Happy, aes(x = sex, fill = happy)) +
+  geom_bar(position = 'fill') +
+  ggtitle("Happiness by Gender") +
+  xlab("Gender") +
+  ylab("Proportion")
+```
+
+Looking at the plots including sex and degree there does not seem to be a significant relationship between either sex or degree and the level of happiness.
+
+###Relationship between Healthiness and Happiness
+```{r}
+ggplot(data = Happy, aes(x = health, fill = happy )) +
+  geom_bar(position = 'fill') +
+  ggtitle("Healthiness by Happiness") +
+  xlab("Healthiness") +
+  ylab("Proportion")
+```
+
+Unlike sex and degree, when looking at hte Healthiness by Happiness plot there is a noticable relationship between the proportion of people in each happieness level and each healthiness level. People with poor health are associated with people that are not too happy and people with excellent health are associated with people who are very happy.
+
+
+----------- END OF REPORT ----------------
+
+## Work done before putting report together 
+
+- We will check whether or not your lab results are reproducible - i.e. we will knit your `team.Rmd` file. 
+
+- At this point, you should be pretty familar with using Rmarkdown and explored its various features. Starting from this assignment, you will also be graded on **style**. Style means is your report *clear, easy to read, and flows logically*? Is it obvious that you and your partner have spent time organizing the material in a compelling way that makes it easy (and even enjoyable) for others to read? This `team.Rmd` should be something that you would feel confident turning into a manager/supervisor as proof of your progress. 
+
+-  <span style="color:red">Each plot at **minimum** must have labels for both axes and a title. If you don't have these components, you will not get full credit for your answers. Each plot ideally should also come with a description. </span> 
 
 ## Background
 
-The General Social Survey (GSS) has been run by NORC every other year since 1972 to keep track of current opinions across the United States. We are working with an excerpt of the dataset that covers years 1972 to 2016. The variable names along with a brief description are as follows: 
+The General Social Survey (GSS) has been run by NORC every other year since 1972 to keep track of current opinions across the United States. 
 
-| Variable      | Description   |    
-| ------------- |:-------------:| 
-| Year          | Year for this respondent | 
-| Age           | Age of respondent | 
-| Sex           | Sex of respondent     | 
-|....           | .....      | 
+An excerpt of the GSS data is available from my github website. 
+
+```{r}
+Happy <- readRDS("HAPPY.rds")
+head(Happy)
+```
+
+Converted all names to lowercase, becasue it is easier to work with.  
+```{r}
+names(Happy) = tolower(names(Happy))
+names(Happy)
+```
 
 Now it's important to understand what each column stands for. You can find a codebook with explanations for each of the variables at https://gssdataexplorer.norc.org/
 
-## Data Cleaning 
 
-Initial exploration revealed that some data processing was needed before we could proceed with further visualization. All missing values were encoded with 'NA' as follows:
+## Part one (cleaning)
+Answer each of the following questions using R code to get an answer. 
+
+Write a separate code chunk to manipulate each variable. Once all the data manipulation is done, show the values in a barchart or histogram and comment on the plot. Use `ggplot2` to create the plots.
+
+1. Data cleaning: the values "IAP", "DK" and "NA" all encode missing values. We have replaced all of these instances by the value `NA`. 
 ```{r}
-#insert relevant R code for Q1 here
+Happy[Happy=="IAP"]=NA
+Happy[Happy=="NA"]=NA
+Happy[Happy=="DK"]=NA
+head(Happy)
+```
+2. For age, we have changed "89 OR OLDER" to 89 and changed the variable to numeric. Cast categorical variables to factor. 
+```{r}
+unique(Happy$age)
+```
+```{r}
+Happy$age[Happy$age=="89 OR OLDER"] <- '89'
+Happy$age <- as.numeric(Happy$age)
+typeof(Happy$age)
+```
+```{r}
+Happy$degree <- as.factor(Happy$degree)
+Happy$happy <- as.factor(Happy$happy)
+Happy$sex <- as.factor(Happy$sex)
+Happy$finrela <- as.factor(Happy$finrela)
+Happy$health <- as.factor(Happy$health)
+```
+3. 
+Bring all levels of factors into a sensible order. For marital you could e.g. order the levels according to average age. 
+```{r}
+age<- Happy$age
+marital<- Happy$marital
+sex<- Happy$sex
+health <- Happy$health
+```
+We have reordered marital. We also ordered marital by age. 
+```{r}
+Happy$marital <- factor(Happy$marital, levels = c("NEVER MARRIED", "MARRIED", "SEPARATED", "DIVORCED", "WIDOWED"))
+Happy$marital <- order(marital, age)
+```
+We also reordered degree by the order of which you would go about obtaining each degree.
+```{r}
+Happy$degree <- factor(Happy$degree, levels = c("LT HIGH SCHOOL", "HIGH SCHOOL", "JUNIOR COLLEGE", "BACHELOR", "GRADUATE"))
+```
+Then we reordered health from the worst health, poor, to the best health, excellent.
+```{r}
+Happy$health <- factor(Happy$health, levels = c("POOR", "FAIR", "GOOD", "EXCELLENT"))
+```
+## Part two (exploration)
+*Happiness!*
+Use `ggplot2` to create the plots. Your exploration should make use all elements of the grammar of graphics: mappings (`color`, `fill`, and `size` at least), different `geom`s (4 at least), scales, coordinates (eg `coord_flip`), facet, and theme (eg setting axis labels and title). **The final plot doesn't need to include all these elements, but they should be part of your exploration**. For each investigation, create an appropriate visualization and write a paragraph to describe it.
+
+1. Investigate the distributions of 2 different variables. 
+```{r}
+library(tidyverse)
 ```
 
-In total there were `....` number of missing values for the following `....` variables. 
-
-Variables were also cast into the correct type in order to ease data visualization. This was done by:
 ```{r}
-#insert relevant R code for Q2 here
+ggplot(data = Happy, aes(x=sex)) +
+  geom_bar() +
+  ggtitle("Distribution of Gender") +
+  xlab("Gender")
 ```
 
-Factors were also organized into meaningful order as follows: 
 ```{r}
-#insert relevant R code for Q3 here
+prop.table(table(Happy$sex))
 ```
 
-
-## Data Exploration 
-
-Two variables of interest are `...` and `...`. Their distributions are as follow: 
 ```{r}
-#insert relevant R code here
-#include graphics. DESCRIBE your plot in context. Make sure it includes axis labels and appropriate title. 
+ggplot(data = Happy, aes(x=degree)) +
+  geom_bar() +
+  ggtitle("Distribution of Education Level") +
+  xlab("Education Level")
 ```
 
-The distribution for `...` is `....`, suggesting that `....` 
+```{r}
+table(Happy$degree)
+```
+
+```{r}
+ggplot(data = Happy, aes(x = happy, color = marital)) + 
+  geom_bar(fill = "sky blue")+
+  ggtitle("Distribution of Happiness") +
+  xlab("Happiness")
+```
+```{r}
+prop.table(table(Happy$happy))
+```
+
+2. Investigate the relationship between happiness and three other variables in the data.
+```{r}
+#relationship between happy and degree
+ggplot(data = Happy, aes(x = happy)) +
+  geom_bar() +
+  facet_wrap(~degree)
+
+#relationship between happy and sex
+ggplot(data = Happy, aes(x = happy)) +
+  geom_bar() +
+  facet_wrap("sex")
+
+#relationship between happiness and health
+ggplot(data = Happy, aes(x = happy)) +
+  geom_bar() +
+  facet_wrap("health")
+```
+
+```{r}
+ggplot(data = Happy, aes(x = degree, fill= happy)) +
+  geom_bar(position = "fill") +
+  ggtitle("Education by Happiness") +
+  xlab("Level of Education")
+```
+
+```{r}
+ggplot(data = Happy, aes(x = health, fill = happy )) +
+  geom_bar(position = 'fill') +
+  ggtitle("Healthiness by Happiness") +
+  xlab("Healthiness")
+```
+```{r}
+ggplot(data = Happy, aes(x = sex, fill = happy)) +
+  geom_bar(position = 'fill') +
+  ggtitle("Happiness by Gender") +
+  xlab("Happiness") 
+```
+3. What do you learn from the data set? Write one or two paragraphs to describe.
+When focussing on degree the data shows us that people with a high school degree as their highest level of education is greater than any other level of degree while, people with a junior collegiate degree as their highest level of education is lower than any other degree level. Looking at happiness overall we see that about 55% of people are "Pretty Happy", only about 12% of people are "Not Too Happy", and the remaining 31% are "Very Happy."
+
+When looking at the relationship between happiness and Gender we see that there isn't a high correlation between the between male and female they both seem to have similar proportions of each level of happiness.The relationship between happiness and Education seems to be a little bit of a greater relationship but it's still not very significant. The relationship between health and happiness seems to be the greatest out of the three variables we looked at. Those with poor health have the greatest proportion of of people that are not too happy, while those with excellent health have the least proporiton of people that are not too happy. 
+Put together everything you've done in Part 1 and 2 into a report (`team.Rmd`). This report should **all** of the questions from Part 1 and 2 and be written in a clear and concise manner. It should **not** be in question and answer format. However you need to address **every** question in order to get full points. **Include R code and graphics when appropriate.** See `Lab3_template.Rmd` for a minimal working example.   
+## Submission
+2. **Submit both `team.Rmd` and `team.html` to Canvas as well**. In your submission, include: 
+
+    - The owner's GitHub username 
+
+    - The partner's GitHub username 
+
+    - Repo name (should be `ds202_lab3`)
 
